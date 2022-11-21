@@ -1,32 +1,32 @@
 #pragma once
 
 // number of server threads on each node
-#define NUM_SERVER_THREADS 8
+#define NUM_SERVER_THREADS 6            // same as paper, confirmed
 
 // CPU_FREQ is used to get accurate timing info
 // We assume all nodes have the same CPU frequency.
-#define CPU_FREQ 3.7     // in GHz/s
+#define CPU_FREQ 2.3     // in GHz/s    // confirmed
 
 // warmup time in seconds
 #define WARMUP 0
 // WORKLOAD can be YCSB or TPCC
-#define WORKLOAD TPCC
+#define WORKLOAD YCSB
 
 // Statistics
 // ==========
 // COLLECT_LATENCY: when set to true, will collect transaction latency information
-#define COLLECT_LATENCY true
+#define COLLECT_LATENCY false           // statics related, disabled
 // PRT_LAT_DISTR: when set to true, will print transaction latency distribution
-#define PRT_LAT_DISTR false
-#define STATS_ENABLE true
-#define TIME_ENABLE true
-#define STATS_CP_INTERVAL 1000 // in ms
+#define PRT_LAT_DISTR false             // statics related, disabled
+#define STATS_ENABLE true               // statics related, must be enabled
+#define TIME_ENABLE true                // statics related, must be enabled
+#define STATS_CP_INTERVAL 1000          // in ms, one seconrd, confirmed
 
 // Concurrency Control
 // ===================
 // Supported concurrency control algorithms: WAIT_DIE, NO_WAIT, TICTOC, F_ONE, MAAT
-#define CC_ALG WAIT_DIE
-#define ISOLATION_LEVEL SERIALIZABLE
+#define CC_ALG TICTOC                   // checked to be TICTOC
+#define ISOLATION_LEVEL SERIALIZABLE    // confirmed
 
 // KEY_ORDER: when set to true, each transaction accesses tuples in the primary key order.
 // Only effective when WORKLOAD == YCSB.
@@ -71,37 +71,37 @@
 // node will not participate in the 2PC protocol.
 #define SKIP_READONLY_PREPARE        false
 #define MAX_NUM_WAITS                4
-#define READ_INTENSITY_THRESH         0.8
+#define READ_INTENSITY_THRESH         0.8                   // same as paper
 
 // [Caching in TicToc]
-#define ENABLE_LOCAL_CACHING         false
-#define CACHING_POLICY                ALWAYS_CHECK
+#define ENABLE_LOCAL_CACHING         true                   // same as paper
+#define CACHING_POLICY                READ_INTENSIVE        // same as paper
 #define RO_LEASE                    false
-#define LOCAL_CACHE_SIZE            (1024*1024) // in KB
+#define LOCAL_CACHE_SIZE            (1024*1024) // in KB    // same as paper
 #define REUSE_FRESH_DATA            false
 #define REUSE_IF_NO_REMOTE             false
 
-#define LOCK_ALL_BEFORE_COMMIT        false
-#define LOCK_ALL_DEBUG                false
+#define LOCK_ALL_BEFORE_COMMIT        false // unrelated: Lock read set
+#define LOCK_ALL_DEBUG                false // unrelated: related to print
 #define TRACK_LAST                  false
-#define LOCK_TRIAL                    3
+#define LOCK_TRIAL                    3     // unused
 #define MULTI_VERSION               false
 // [TICTOC, SILO]
 #define OCC_LOCK_TYPE                 WAIT_DIE
 #define PRE_ABORT                    true
-#define ATOMIC_WORD                    false
+#define ATOMIC_WORD                    false    // XXX: compile error
 #define UPDATE_TABLE_TS                true
 // [MAAT]
-#define DEBUG_REFCOUNT                false
+#define DEBUG_REFCOUNT                false     // debug
 // [HSTORE]
 // when set to true, hstore will not access the global timestamp.
 // This is fine for single partition transactions.
-#define HSTORE_LOCAL_TS                false
+#define HSTORE_LOCAL_TS                false    // unused
 // [VLL]
-#define TXN_QUEUE_SIZE_LIMIT        THREAD_CNT
+#define TXN_QUEUE_SIZE_LIMIT        THREAD_CNT  // unused
 
 ////////////////////////////////////////////////////////////////////////
-// Logging
+// Logging  // disabled by default, if enabled, performance will drop
 ////////////////////////////////////////////////////////////////////////
 #define LOG_ENABLE                    false
 #define LOG_COMMAND                    false
@@ -112,25 +112,25 @@
 // Benchmark
 ////////////////////////////////////////////////////////////////////////
 // max number of rows touched per transaction
-#define WARMUP_TIME                    0 // in seconds
-#define RUN_TIME                    1 // in seconds
-#define MAX_TUPLE_SIZE                1024 // in bytes
-#define INIT_PARALLELISM            40
+#define WARMUP_TIME                 0 // in seconds     // cmd parameter
+#define RUN_TIME                    1 // in seconds     // cmd parameter
+#define MAX_TUPLE_SIZE              1024 // in bytes    // unused
+#define INIT_PARALLELISM            40                  // unrelated
 ///////////////////////////////
 // YCSB
 ///////////////////////////////
 // Number of tuples per node
-#define SYNTH_TABLE_SIZE             (1024 * 10)
-#define ZIPF_THETA                     0.9
-#define READ_PERC                     0.9
-#define PERC_READONLY_DATA            0
-#define PERC_REMOTE                    0.1
-#define SINGLE_PART_ONLY            false // access single partition only
-#define REQ_PER_QUERY                16
-#define THINK_TIME                    0  // in us
-#define SOCIAL_NETWORK                false
+#define SYNTH_TABLE_SIZE             (1024 * 1024 * 10)                     // XXX: a wrong configuration
+#define ZIPF_THETA                     0.9                                  // the same as paper
+#define READ_PERC                     0.9                                   // the same as paper
+#define PERC_READONLY_DATA            0                                     // unused
+#define PERC_REMOTE                    0.1                                  // the same as paper
+#define SINGLE_PART_ONLY            false // access single partition only   // the same as paper
+#define REQ_PER_QUERY                16                                     // the same as paper
+#define THINK_TIME                    0  // in us                           // not mentioned in the paper
+#define SOCIAL_NETWORK                false                                 // not mentioned in the paper
 ///////////////////////////////
-// TPCC
+// TPCC // unrelated to YCSB
 ///////////////////////////////
 
 // For large warehouse count, the tables do not fit in memory
@@ -153,7 +153,7 @@
 #define DIST_PER_WARE                10
 
 ///////////////////////////////
-// TATP
+// TATP // unrelated to YCSB
 ///////////////////////////////
 // Number of subscribers per node.
 #define TATP_POPULATION                100000
@@ -161,17 +161,17 @@
 ////////////////////////////////////////////////////////////////////////
 // TODO centralized CC management.
 ////////////////////////////////////////////////////////////////////////
-#define MAX_LOCK_CNT                (20 * THREAD_CNT)
-#define TSTAB_SIZE                  50 * THREAD_CNT
-#define TSTAB_FREE                  TSTAB_SIZE
-#define TSREQ_FREE                  4 * TSTAB_FREE
-#define MVHIS_FREE                  4 * TSTAB_FREE
-#define SPIN                        false
+#define MAX_LOCK_CNT                (20 * THREAD_CNT)   // unused
+#define TSTAB_SIZE                  50 * THREAD_CNT     // unused
+#define TSTAB_FREE                  TSTAB_SIZE          // unused
+#define TSREQ_FREE                  4 * TSTAB_FREE      // unused
+#define MVHIS_FREE                  4 * TSTAB_FREE      // unused
+#define SPIN                        false               // unused
 
 ////////////////////////////////////////////////////////////////////////
 // Test cases
 ////////////////////////////////////////////////////////////////////////
-#define TEST_ALL                    true
+#define TEST_ALL                    true        // unused
 enum TestCases {
     READ_WRITE,
     CONFLICT
@@ -181,18 +181,18 @@ extern TestCases                    g_test_case;
 ////////////////////////////////////////////////////////////////////////
 // DEBUG info
 ////////////////////////////////////////////////////////////////////////
-#define WL_VERB                        true
-#define IDX_VERB                    false
-#define VERB_ALLOC                    true
+#define WL_VERB                        true // unused
+#define IDX_VERB                    false   // unused
+#define VERB_ALLOC                    true  // unused
 
-#define DEBUG_LOCK                    false
-#define DEBUG_TIMESTAMP                false
-#define DEBUG_SYNTH                    false
-#define DEBUG_ASSERT                false
-#define DEBUG_CC                    false
+#define DEBUG_LOCK                    false     // debug related
+#define DEBUG_TIMESTAMP                false    // debug related
+#define DEBUG_SYNTH                    false    // debug related
+#define DEBUG_ASSERT                false       // debug related
+#define DEBUG_CC                    false       // debug related
 
 ////////////////////////////////////////////////////////////////////////
-// Constant
+// Constant // enumeration
 ////////////////////////////////////////////////////////////////////////
 // index structure
 #define IDX_HASH                     1
@@ -229,15 +229,15 @@ extern TestCases                    g_test_case;
 /***********************************************/
 // Distributed DBMS
 /***********************************************/
-#define START_PORT 35777
-#define INOUT_QUEUE_SIZE 1024
-#define NUM_INPUT_THREADS 1
-#define NUM_OUTPUT_THREADS 1
-#define MAX_NUM_ACTIVE_TXNS 128
-#define ENABLE_MSG_BUFFER false
+#define START_PORT 35777            // unrelated
+#define INOUT_QUEUE_SIZE 1024  // XXX: checked but do not influence performance
+#define NUM_INPUT_THREADS 1         // same to paper
+#define NUM_OUTPUT_THREADS 1        // same to paper
+#define MAX_NUM_ACTIVE_TXNS 128     // 128 has already saturate one server
+#define ENABLE_MSG_BUFFER false  // XXX:hurt performance
 #define MAX_MESSAGE_SIZE 16384
 #define RECV_BUFFER_SIZE 32768
 #define SEND_BUFFER_SIZE 32768
-#define MODEL_DUMMY_MSG false
+#define MODEL_DUMMY_MSG false       // unused
 
 #define MAX_CLOCK_SKEW 0 // in us
