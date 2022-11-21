@@ -1,2 +1,5 @@
 *.d
 *.o
+.vscode/
+run.sh
+rundb

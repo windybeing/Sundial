@@ -53,6 +53,7 @@ private:
     RC adjust_timestamps_wr(TCMManager * holder, TCMManager * requester);
     RC adjust_timestamps_ww(TCMManager * holder, TCMManager * requester);
 
-} __attribute__ ((aligned(64)));
+};
+//  __attribute__ ((aligned(64)));
 
 #endif

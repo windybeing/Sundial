@@ -351,7 +351,8 @@ Transport::test_connect()
         uint32_t bytes = sendMsg(msg);
         if (bytes != msg->get_packet_len())
             sendBufferedMsg();
-        DELETE(Message, msg); //delete msg;
+        // DELETE(Message, msg); //delete msg;
+        free(msg);
     }
     // receive msg from all nodes
     for (uint32_t i = 0; i < g_num_nodes - 1; i++) {
