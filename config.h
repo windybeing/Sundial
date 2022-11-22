@@ -36,14 +36,14 @@
 #define BUCKET_CNT 31
 #define MAX_NUM_ABORTS 0
 #define ABORT_PENALTY 1000000
-#define ABORT_BUFFER_SIZE 10
-#define ABORT_BUFFER_ENABLE true
+#define ABORT_BUFFER_SIZE 10        // unused
+#define ABORT_BUFFER_ENABLE true    // unused
 // [ INDEX ]
-#define ENABLE_LATCH false
-#define CENTRAL_INDEX false
-#define CENTRAL_MANAGER false
-#define INDEX_STRUCT IDX_HASH
-#define BTREE_ORDER 16
+#define ENABLE_LATCH false          // unused, only for INDEX_BTREE
+#define CENTRAL_INDEX false         // unused
+#define CENTRAL_MANAGER false       // unused
+#define INDEX_STRUCT IDX_HASH       // only INDEX_HASH is available, INDEX_BTREE introduces compile error
+#define BTREE_ORDER 16              // unused, only for INDEX_BTREE
 
 // [Two Phase Locking]
 #define NO_LOCK false // NO_LOCK=true : used to model H-Store
@@ -57,26 +57,26 @@
 #define MAX_WRITE_SET 10
 #define PER_ROW_VALID true
 // [TICTOC]
-#define WRITE_COPY_FORM "data" // ptr or data
-#define TICTOC_MV false
-#define WR_VALIDATION_SEPARATE true
-#define WRITE_PERMISSION_LOCK false
-#define ATOMIC_TIMESTAMP "false"
+#define WRITE_COPY_FORM "data" // ptr or data   // unused
+#define TICTOC_MV false                         // unused as ATOMIC_WORD is not used
+#define WR_VALIDATION_SEPARATE true             // unused
+#define WRITE_PERMISSION_LOCK false             // unused as ATOMIC_WORD is not used
+#define ATOMIC_TIMESTAMP "false"                // unused
 
 // when WAW_LOCK is true, lock a tuple before write.
 // essentially, WW conflicts are handled as 2PL.
-#define OCC_WAW_LOCK                true
+#define OCC_WAW_LOCK                true        // same as paper
 // if SKIP_READONLY_PREPARE is true, then a readonly subtxn will forget
 // about its states after returning. If no renewal is required, this remote
 // node will not participate in the 2PC protocol.
-#define SKIP_READONLY_PREPARE        false
+#define SKIP_READONLY_PREPARE        false                  // unused
 #define MAX_NUM_WAITS                4
 #define READ_INTENSITY_THRESH         0.8                   // same as paper
 
 // [Caching in TicToc]
 #define ENABLE_LOCAL_CACHING         true                   // same as paper
 #define CACHING_POLICY                READ_INTENSIVE        // same as paper
-#define RO_LEASE                    false
+#define RO_LEASE                    false   // XXX:tunable
 #define LOCAL_CACHE_SIZE            (1024*1024) // in KB    // same as paper
 #define REUSE_FRESH_DATA            false
 #define REUSE_IF_NO_REMOTE             false
@@ -240,4 +240,4 @@ extern TestCases                    g_test_case;
 #define SEND_BUFFER_SIZE 32768
 #define MODEL_DUMMY_MSG false       // unused
 
-#define MAX_CLOCK_SKEW 0 // in us
+#define MAX_CLOCK_SKEW 0 // in us   // unused

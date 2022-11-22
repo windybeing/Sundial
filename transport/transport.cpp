@@ -55,7 +55,7 @@ Transport::Transport(uint32_t transport_id)
 
     char hostname[1024];
     gethostname(hostname, 1023);
-    /*if(std::strlen(hostname) > 9) {  // then this is an AWS host name
+    if(std::strlen(hostname) > 9) {  // then this is an AWS host name
         char buffer[128];
         int id_b = 0;
         std::shared_ptr<FILE> pipe(popen("curl http://169.254.169.254/latest/meta-data/local-ipv4", "r"), pclose);
@@ -67,7 +67,7 @@ Transport::Transport(uint32_t transport_id)
             }
         }
         hostname[id_b << 7] = 0;  // in case they don't have a \0
-    }*/
+    }
     printf("[!] My Hostname is %s\n", hostname);
     uint32_t global_node_id = g_num_nodes;
     for (uint32_t i = 0; i < g_num_nodes; i ++)  {
