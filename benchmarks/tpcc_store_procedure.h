@@ -43,10 +43,15 @@ private:
     int64_t         _c_id;
 
     // for DELIVERY
+#if NORMAL_DELIVERY
+    double             _ol_amounts[10];
+    int64_t         _o_ids[10];
+    int64_t         _c_ids[10];
+#else
     uint32_t         _curr_dist;
     itemid_t *        _curr_item;
     double             _ol_amount;
-
+#endif
     // For STOCK LEVEL
     set<int64_t>    _items;
     set<int64_t>::iterator _item_iter;

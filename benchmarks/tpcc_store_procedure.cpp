@@ -29,8 +29,10 @@ TPCCStoreProcedure::init()
     _curr_step = 0;
     _curr_ol_number = 0;
 
+#if !NORMAL_DELIVERY
     _curr_dist = 0;
     _ol_amount = 0;
+#endif
     _ol_num = 0;
 }
 
@@ -558,75 +560,83 @@ TPCCStoreProcedure::execute_delivery()
     Catalog * schema;
     INDEX * index;
 
-    _curr_dist = query->d_id;
     if (_curr_step == 0) {
-        // Delete from NEW ORDER table.
-        key = neworderKey(query->w_id, _curr_dist);
-        index = wl->i_neworder;
-        schema = wl->t_neworder->get_schema();
-        set<row_t *> * rows = NULL;
+        for (uint64_t d_id = 0; d_id < DIST_PER_WARE; ++d_id) {
+            // Delete from NEW ORDER table.
+            key = neworderKey(query->w_id, d_id + 1);
+            index = wl->i_neworder;
+            schema = wl->t_neworder->get_schema();
+            set<row_t *> * rows = NULL;
 
-        // TODO. should pick the row with the lower NO_O_ID. need to do a scan here.
-        // However, HSTORE just pick one row using LIMIT 1. So we also just pick a row.
-        rc = get_cc_manager()->index_read(index, key, rows, 1);
-        if (rc != RCOK) return rc;
-        if (!rows)
-            return RCOK;
-        _curr_row = *rows->begin();
+            // TODO. should pick the row with the lower NO_O_ID. need to do a scan here.
+            // However, HSTORE just pick one row using LIMIT 1. So we also just pick a row.
+            rc = get_cc_manager()->index_read(index, key, rows, 1);
+            if (rc != RCOK) return rc;
+            if (!rows)
+                return RCOK;
+            _curr_row = *rows->begin();
 
-        rc = get_cc_manager()->get_row(_curr_row, RD, _curr_data, key);
-        assert(rc == RCOK);
+            rc = get_cc_manager()->get_row(_curr_row, RD, _curr_data, key);
+            assert(rc == RCOK);
 
-        LOAD_VALUE(int64_t, o_id, schema, _curr_data, NO_O_ID);
-        _o_id = o_id;
-        rc = get_cc_manager()->row_delete( _curr_row );
+            LOAD_VALUE(int64_t, o_id, schema, _curr_data, NO_O_ID);
+            _o_ids[d_id] = o_id;
+            rc = get_cc_manager()->row_delete( _curr_row );
+            if (rc == ABORT) return rc;
+        }
         _curr_step = 1;
         if (rc != RCOK) return rc;
     }
     if (_curr_step == 1) {
-        // access the ORDER table.
-        key = orderKey(query->w_id, _curr_dist, _o_id);
-        index = wl->i_order;
-        schema = wl->t_order->get_schema();
-        GET_DATA(key, index, WR);
-        LOAD_VALUE(int64_t, o_c_id, schema, _curr_data, O_C_ID);
-        _c_id = o_c_id;
-        STORE_VALUE(query->o_carrier_id, schema, _curr_data, O_CARRIER_ID);
+        for (uint64_t d_id = 0; d_id < DIST_PER_WARE; ++d_id) {
+            // access the ORDER table.
+            key = orderKey(query->w_id, d_id + 1, _o_ids[d_id]);
+            index = wl->i_order;
+            schema = wl->t_order->get_schema();
+            GET_DATA(key, index, WR);
+            LOAD_VALUE(int64_t, o_c_id, schema, _curr_data, O_C_ID);
+            _c_ids[d_id] = o_c_id;
+            STORE_VALUE(query->o_carrier_id, schema, _curr_data, O_CARRIER_ID);
+        }
         _curr_step = 2;
     }
     if (_curr_step == 2) {
-        // access the ORDER LINE table.
-        key = orderlineKey(query->w_id, _curr_dist, _o_id);
-        index = wl->i_orderline;
-        schema = wl->t_orderline->get_schema();
-        set<row_t *> * rows = NULL;
-        rc = get_cc_manager()->index_read(index, key, rows);
-        if (rc != RCOK) return rc;
-        if (rows == NULL)
-            return ABORT;
-        for (set<row_t *>::iterator it = rows->begin(); it != rows->end(); it ++) {
-            _curr_row = *it;
-            rc = get_cc_manager()->get_row(_curr_row, RD, _curr_data, key);
+        for (uint64_t d_id = 0; d_id < DIST_PER_WARE; ++d_id) {
+            // access the ORDER LINE table.
+            key = orderlineKey(query->w_id, d_id + 1, _o_ids[d_id]);
+            index = wl->i_orderline;
+            schema = wl->t_orderline->get_schema();
+            set<row_t *> * rows = NULL;
+            rc = get_cc_manager()->index_read(index, key, rows);
             assert(rc == RCOK);
-            LOAD_VALUE(double, ol_amount, schema, _curr_data, OL_AMOUNT);
-            _ol_amount += ol_amount;
+            if (rows == NULL)
+                return ABORT;
+            for (set<row_t *>::iterator it = rows->begin(); it != rows->end(); it ++) {
+                _curr_row = *it;
+                rc = get_cc_manager()->get_row(_curr_row, RD, _curr_data, key);
+                assert(rc == RCOK);
+                LOAD_VALUE(double, ol_amount, schema, _curr_data, OL_AMOUNT);
+                _ol_amounts[d_id] += ol_amount;
+            }
         }
         _curr_step = 3;
     }
     if (_curr_step == 3) {
-        // update CUSTOMER
-        key = custKey(query->w_id, _curr_dist, _c_id);
-        index = wl->i_customer_id;
-        schema = wl->t_customer->get_schema();
-        GET_DATA(key, index, WR);
+        for (uint64_t d_id = 0; d_id < query->d_id; ++d_id) {        
+            // update CUSTOMER
+            key = custKey(query->w_id, d_id + 1, _c_ids[d_id]);
+            index = wl->i_customer_id;
+            schema = wl->t_customer->get_schema();
+            GET_DATA(key, index, WR);
 
-        LOAD_VALUE(double, c_balance, schema, _curr_data, C_BALANCE);
-        c_balance += _ol_amount;
-        STORE_VALUE(c_balance, schema, _curr_data, C_BALANCE);
+            LOAD_VALUE(double, c_balance, schema, _curr_data, C_BALANCE);
+            c_balance += _ol_amounts[d_id];
+            STORE_VALUE(c_balance, schema, _curr_data, C_BALANCE);
 
-        LOAD_VALUE(int64_t, c_delivery_cnt, schema, _curr_data, C_DELIVERY_CNT);
-        c_delivery_cnt ++;
-        STORE_VALUE(c_delivery_cnt, schema, _curr_data, C_DELIVERY_CNT);
+            LOAD_VALUE(int64_t, c_delivery_cnt, schema, _curr_data, C_DELIVERY_CNT);
+            c_delivery_cnt ++;
+            STORE_VALUE(c_delivery_cnt, schema, _curr_data, C_DELIVERY_CNT);
+        }
     }
     _curr_step = 0;
     return RCOK;
@@ -785,10 +795,11 @@ TPCCStoreProcedure::txn_abort()
     _curr_step = 0;
     _curr_ol_number = 0;
 
+#if !NORMAL_DELIVERY
     _curr_dist = 0;
     _ol_amount = 0;
     _ol_num = 0;
-
+#endif
     StoreProcedure::txn_abort();
 }
 
