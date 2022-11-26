@@ -91,6 +91,7 @@ RC ServerThread::run() {
         // checkpoint the stats every 100 ms.
         if (GET_THD_ID == 0 && get_sys_clock() - last_stats_cp_time > STATS_CP_INTERVAL * 1000 * 1000) {
             stats->checkpoint();
+            // cout << txn_table->get_size() << endl;
             last_stats_cp_time += STATS_CP_INTERVAL * 1000000;
         }
 

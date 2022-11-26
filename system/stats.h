@@ -150,6 +150,8 @@ public:
     uint64_t _commits_per_txn_type[5];
     uint64_t _aborts_per_txn_type[5];
     uint64_t _time_per_txn_type[5];
+    uint64_t _locals_per_txn_type[5];
+    uint64_t _remotes_per_txn_type[5];
 #endif
 };
 

@@ -181,12 +181,22 @@ TxnManager::update_stats()
         all.push_back(latency);
 #endif
         if (!is_sub_txn()) {
+            uint64_t total_msg = 0;
             for (uint32_t i = 0; i < Message::NUM_MSG_TYPES; i ++) {
                 if (i == Message::PREPARED_ABORT)
                     M_ASSERT(_msg_count[i] == 0, "txn=%ld\n", get_txn_id());
                 stats->_stats[GET_THD_ID]->_msg_committed_count[i] += _msg_count[i];
                 stats->_stats[GET_THD_ID]->_msg_committed_size[i] += _msg_size[i];
+                total_msg += _msg_count[i];
             }
+#if WORKLOAD == TPCC && STATS_ENABLE
+            uint32_t type = ((QueryTPCC *)_store_procedure->get_query())->type;
+            if (total_msg == 0) {
+                stats->_stats[GET_THD_ID]->_locals_per_txn_type[ type ]++;        
+            } else {
+                stats->_stats[GET_THD_ID]->_remotes_per_txn_type[ type ]++;        
+            }
+#endif
         }
     } else if ( _txn_state == ABORTED ) {
         INC_INT_STATS(num_aborts, 1);
@@ -608,6 +618,8 @@ TxnManager::process_2pc_prepare_phase()
     } else if (rc == RCOK || rc == WAIT) {
         // for local caching, some remotes nodes are not registered
         _cc_manager->get_remote_nodes(&remote_nodes_involved);
+        // if (remote_nodes_involved.size() > 0)
+        //     INC_INT_STATS(int_debug1, 1);
         for (set<uint32_t>::iterator it = remote_nodes_involved.begin();
             it != remote_nodes_involved.end();
             it ++)

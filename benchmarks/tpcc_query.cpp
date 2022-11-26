@@ -94,7 +94,18 @@ QueryNewOrderTPCC::QueryNewOrderTPCC()
     remote = false;
 
     for (uint32_t oid = 0; oid < ol_cnt; oid ++) {
-        items[oid].ol_i_id = NURand(8191, 1, g_max_items);
+        bool need_rerand = true;
+        while (need_rerand) {
+            items[oid].ol_i_id = NURand(8191, 1, g_max_items);
+            need_rerand = false;
+            for (uint j = 0; j < oid; j++) {
+                if (items[j].ol_i_id == items[oid].ol_i_id) {
+                    need_rerand = true;
+                    break;
+                }
+            }
+        }
+        // items[oid].ol_i_id = NURand(8191, 1, g_max_items);
         // handle roll back. invalid ol_i_id.
         if (oid == ol_cnt - 1 && rbk == 1)
             items[oid].ol_i_id = 0;
@@ -116,6 +127,7 @@ QueryNewOrderTPCC::QueryNewOrderTPCC()
                 items[i] = items[ol_cnt - 1];
                 ol_cnt --;
                 i--;
+                assert(false);
             }
         }
     }

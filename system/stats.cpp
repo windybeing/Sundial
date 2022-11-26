@@ -36,6 +36,8 @@ void Stats_thd::clear() {
     memset(_commits_per_txn_type, 0, sizeof(uint64_t) * 5);
     memset(_aborts_per_txn_type, 0, sizeof(uint64_t) * 5);
     memset(_time_per_txn_type, 0, sizeof(uint64_t) * 5);
+    memset(_locals_per_txn_type, 0, sizeof(uint64_t) * 5);
+    memset(_remotes_per_txn_type, 0, sizeof(uint64_t) * 5);
 #endif
 }
 
@@ -183,18 +185,24 @@ void Stats::output(std::ostream * os)
     out << "    " << setw(18) << left << "Txn Name"
         << setw(12) << left << "Commits"
         << setw(12) << left << "Aborts"
+        << setw(12) << left << "Locals"
+        << setw(12) << left << "Remotes"
         << setw(12) << left << "Time" << endl;
     for (uint32_t i = 0; i < 5; i ++) {
-        uint64_t commits = 0, aborts = 0;
+        uint64_t commits = 0, aborts = 0, locals = 0, remotes = 0;
         double time = 0;
         for (uint32_t tid = 0; tid < g_num_worker_threads; tid ++) {
             commits += _stats[tid]->_commits_per_txn_type[i];
             aborts += _stats[tid]->_aborts_per_txn_type[i];
+            locals += _stats[tid]->_locals_per_txn_type[i];
+            remotes += _stats[tid]->_remotes_per_txn_type[i];
             time += 1.0 * _stats[tid]->_time_per_txn_type[i] / BILLION;
         }
         out << "    " << setw(18) << left << TPCCHelper::get_txn_name(i)
             << setw(12) << left << commits
             << setw(12) << left << aborts
+            << setw(12) << left << locals
+            << setw(12) << left << remotes
             << setw(12) << left << time << endl;
     }
 #endif

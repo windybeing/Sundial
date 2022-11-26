@@ -128,6 +128,7 @@ public:
 #endif
     // for locality predictor
     uint32_t             _num_remote_reads; // should cache a local copy if this number is too large.
-} __attribute__ ((aligned(64)));
+};
+//  __attribute__ ((aligned(64)));
 
 #endif

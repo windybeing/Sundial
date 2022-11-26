@@ -5,12 +5,12 @@
 
 // CPU_FREQ is used to get accurate timing info
 // We assume all nodes have the same CPU frequency.
-#define CPU_FREQ 2.3     // in GHz/s    // confirmed
+#define CPU_FREQ 2.5     // in GHz/s    // confirmed
 
 // warmup time in seconds
 #define WARMUP 0
 // WORKLOAD can be YCSB or TPCC
-#define WORKLOAD YCSB
+#define WORKLOAD TPCC
 
 // Statistics
 // ==========
@@ -103,7 +103,7 @@
 ////////////////////////////////////////////////////////////////////////
 // Logging  // disabled by default, if enabled, performance will drop
 ////////////////////////////////////////////////////////////////////////
-#define LOG_ENABLE                    false
+#define LOG_ENABLE                    true
 #define LOG_COMMAND                    false
 #define LOG_REDO                    false
 #define LOG_BATCH_TIME                10 // in ms
@@ -140,13 +140,13 @@
 // TODO. REPLICATE_ITEM_TABLE = false only works for TICTOC.
 #define REPLICATE_ITEM_TABLE        true
 
-#define PERC_PAYMENT                 0.316
-#define PERC_NEWORDER                 0.331
-#define PERC_ORDERSTATUS            0.029
-#define PERC_DELIVERY                0.294
-#define PERC_STOCKLEVEL                0.03
+#define PERC_NEWORDER                 0.45
+#define PERC_PAYMENT                 0.43
+#define PERC_ORDERSTATUS            0.04
+#define PERC_DELIVERY                0.04
+#define PERC_STOCKLEVEL                0.04
 #define PAYMENT_REMOTE_PERC            15 // 15% customers are remote
-#define NEW_ORDER_REMOTE_PERC        1  // 1% order lines are remote
+#define NEW_ORDER_REMOTE_PERC        20  // 1% order lines are remote
 #define FIRSTNAME_MINLEN             8
 #define FIRSTNAME_LEN                 16
 #define LASTNAME_LEN                 16
