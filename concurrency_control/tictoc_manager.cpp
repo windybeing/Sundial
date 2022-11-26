@@ -217,10 +217,15 @@ TicTocManager::get_row(row_t * row, access_t type, uint64_t key, uint64_t wts)
         } else {
             assert(type == WR && OCC_WAW_LOCK);
             rc = row->manager->write(_txn, access->wts, access->rts);
-            if (rc == WAIT)
+            if (rc == WAIT){
                 ATOM_ADD_FETCH(_num_lock_waits, 1);
-            if (rc == ABORT || rc == WAIT)
                 return rc;
+            }
+            if (rc == ABORT){
+                INC_INT_STATS(int_debug5, 1);
+                // cout << row->get_table()->get_table_id() << endl;
+                return rc;
+            }
         }
     } else
         assert(type == WR && OCC_WAW_LOCK);

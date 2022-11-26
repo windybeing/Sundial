@@ -50,6 +50,15 @@ Stats_thd::copy_from(Stats_thd * stats_thd)
     memcpy(_msg_size, stats_thd->_msg_size, sizeof(uint64_t) * Message::NUM_MSG_TYPES);
     memcpy(_msg_committed_count, stats_thd->_msg_committed_count, sizeof(uint64_t) * Message::NUM_MSG_TYPES);
     memcpy(_msg_committed_size, stats_thd->_msg_committed_size, sizeof(uint64_t) * Message::NUM_MSG_TYPES);
+#if WORKLOAD == TPCC
+    for (uint32_t n = 0; n < 5; n ++) {
+        _commits_per_txn_type[n] = stats_thd->_commits_per_txn_type[n];
+        _aborts_per_txn_type[n] = stats_thd->_aborts_per_txn_type[n];
+        _locals_per_txn_type[n] = stats_thd->_locals_per_txn_type[n];
+        _remotes_per_txn_type[n] = stats_thd->_remotes_per_txn_type[n];
+        _time_per_txn_type[n] = stats_thd->_time_per_txn_type[n];
+    }
+#endif
 }
 
 ////////////////////////////////////////////////
@@ -113,6 +122,15 @@ void Stats::output(std::ostream * os)
                 _stats[i]->_msg_committed_count[n] -= base->_stats[i]->_msg_committed_count[n];
                 _stats[i]->_msg_committed_size[n] -= base->_stats[i]->_msg_committed_size[n];
             }
+#if WORKLOAD == TPCC
+            for (uint32_t n = 0; n < 5; n ++) {
+                _stats[i]->_commits_per_txn_type[n] -= base->_stats[i]->_commits_per_txn_type[n];
+                _stats[i]->_aborts_per_txn_type[n] -= base->_stats[i]->_aborts_per_txn_type[n];
+                _stats[i]->_locals_per_txn_type[n] -= base->_stats[i]->_locals_per_txn_type[n];
+                _stats[i]->_remotes_per_txn_type[n] -= base->_stats[i]->_remotes_per_txn_type[n];
+                _stats[i]->_time_per_txn_type[n] -= base->_stats[i]->_time_per_txn_type[n];
+            }
+#endif
         }
     }
 

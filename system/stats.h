@@ -45,6 +45,8 @@ enum StatsFloat {
     STAT_logic,
     STAT_wait,
     STAT_network,
+    STAT_local_wait,
+    STAT_remote_wait,
     STAT_cache,
 
     // debug stats
@@ -63,6 +65,8 @@ enum StatsInt {
     STAT_num_commits,
     STAT_num_aborts,
     STAT_num_waits,
+    STAT_num_local_waits,
+    STAT_num_remote_waits,
 
     STAT_num_home_txn, // txn mapped to this node.
     STAT_num_remote_txn,
@@ -102,6 +106,9 @@ enum StatsInt {
     STAT_num_ro_check,
     STAT_num_rw_read,
     STAT_num_rw_check,
+
+    STAT_num_rt_per_rem_committed,
+    STAT_num_rt_per_rem_aborted,
 
     STAT_int_debug1,
     STAT_int_debug2,
@@ -224,6 +231,8 @@ public:
         "logic",
         "wait",
         "network",
+        "local_wait",
+        "remote_wait",
         "cache",
 
         // debug
@@ -240,6 +249,9 @@ public:
         "num_commits",
         "num_aborts",
         "num_waits",
+        "num_local_waits",
+        "num_remote_waits",
+        
 
         "num_home_txn",
         "num_remote_txn",
@@ -279,6 +291,9 @@ public:
         "num_ro_check",
         "num_rw_read",
         "num_rw_check",
+        
+        "num_rt_per_rem_committed",
+        "num_rt_per_rem_aborted",
 
         "int_debug1",
         "int_debug2",

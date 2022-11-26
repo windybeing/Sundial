@@ -145,8 +145,10 @@ TxnManager::update_stats()
     _finish_time = get_sys_clock();
     // Stats
     // TODO. collect stats for sub_queries.
-    if (is_sub_txn())
+    if (is_sub_txn()){
+        INC_FLOAT_STATS(remote_wait, _lock_wait_time);
         return;
+    }
 
 #if WORKLOAD == TPCC && STATS_ENABLE
     if (!is_sub_txn()) {
@@ -182,26 +184,38 @@ TxnManager::update_stats()
 #endif
         if (!is_sub_txn()) {
             uint64_t total_msg = 0;
+            uint64_t total_rt = 0;
             for (uint32_t i = 0; i < Message::NUM_MSG_TYPES; i ++) {
                 if (i == Message::PREPARED_ABORT)
                     M_ASSERT(_msg_count[i] == 0, "txn=%ld\n", get_txn_id());
                 stats->_stats[GET_THD_ID]->_msg_committed_count[i] += _msg_count[i];
                 stats->_stats[GET_THD_ID]->_msg_committed_size[i] += _msg_size[i];
                 total_msg += _msg_count[i];
+                total_rt += _msg_count[i] > 0 ? 1 : 0;
             }
+            INC_INT_STATS(num_rt_per_rem_committed, total_rt);
 #if WORKLOAD == TPCC && STATS_ENABLE
             uint32_t type = ((QueryTPCC *)_store_procedure->get_query())->type;
             if (total_msg == 0) {
                 stats->_stats[GET_THD_ID]->_locals_per_txn_type[ type ]++;        
-            } else {
-                stats->_stats[GET_THD_ID]->_remotes_per_txn_type[ type ]++;        
             }
 #endif
         }
     } else if ( _txn_state == ABORTED ) {
         INC_INT_STATS(num_aborts, 1);
-        if (_remote_txn_abort)
+        uint64_t total_rt = 0;
+        for (uint32_t i = 0; i < Message::NUM_MSG_TYPES; i ++) {
+            total_rt += _msg_count[i] > 0 ? 1 : 0;
+        }
+        INC_INT_STATS(num_rt_per_rem_aborted, total_rt);
+
+        if (_remote_txn_abort) {
             INC_INT_STATS(num_aborts_remote, 1);
+#if WORKLOAD == TPCC && STATS_ENABLE
+            uint32_t type = ((QueryTPCC *)_store_procedure->get_query())->type;
+            stats->_stats[GET_THD_ID]->_remotes_per_txn_type[ type ]++;        
+#endif
+        }
         _num_aborts ++;
     } else
         assert(false);

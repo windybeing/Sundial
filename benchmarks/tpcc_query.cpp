@@ -53,7 +53,11 @@ QueryPaymentTPCC::QueryPaymentTPCC()
         if(g_num_wh * g_num_nodes > 1) {
             do {
                 c_w_id = URand(1, g_num_wh * g_num_nodes);
-            } while(c_w_id == w_id);
+#if REMOTE_TPCC
+            } while(g_node_id == (c_w_id / g_num_wh)); 
+#else
+            } while(c_w_id == w_id); 
+#endif
         } else
             c_w_id = w_id;
     }
@@ -115,7 +119,12 @@ QueryNewOrderTPCC::QueryNewOrderTPCC()
         else  {
             do {
                 items[oid].ol_supply_w_id = RAND(g_num_wh * g_num_nodes) + 1;
+#if REMOTE_TPCC
+            } while(g_node_id == (items[oid].ol_supply_w_id / g_num_wh)); 
+#else
             } while (items[oid].ol_supply_w_id == w_id);
+#endif
+
             remote = true;
         }
         items[oid].ol_quantity = URand(1, 10);

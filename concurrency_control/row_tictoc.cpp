@@ -542,7 +542,7 @@ Row_tictoc::try_lock(TxnManager * txn)
     } else
         rc = ABORT;
 #elif OCC_LOCK_TYPE == WAIT_DIE
-      if (!_ts_lock) {
+    if (!_ts_lock) {
         _ts_lock = true;
         assert(_lock_owner == NULL);
         _lock_owner = txn;

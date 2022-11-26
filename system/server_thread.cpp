@@ -254,6 +254,11 @@ ServerThread::handle_req_finish(RC rc, TxnManager * &txn_man)
         return;
     else if (rc == WAIT) {
         INC_INT_STATS(num_waits, 1);
+        if(txn_man->is_sub_txn()) {
+            INC_INT_STATS(num_remote_waits, 1);
+        } else {
+            INC_INT_STATS(num_local_waits, 1);
+        }
         _wait_buffer.insert(txn_man);
         return;
     }

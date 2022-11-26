@@ -15,7 +15,7 @@
 // Statistics
 // ==========
 // COLLECT_LATENCY: when set to true, will collect transaction latency information
-#define COLLECT_LATENCY false           // statics related, disabled
+#define COLLECT_LATENCY true           // statics related, disabled
 // PRT_LAT_DISTR: when set to true, will print transaction latency distribution
 #define PRT_LAT_DISTR false             // statics related, disabled
 #define STATS_ENABLE true               // statics related, must be enabled
@@ -136,7 +136,7 @@
 // For large warehouse count, the tables do not fit in memory
 // small tpcc schemas shrink the table size.
 #define TPCC_SMALL false
-#define NUM_WH 8
+#define NUM_WH 5
 // TODO. REPLICATE_ITEM_TABLE = false only works for TICTOC.
 #define REPLICATE_ITEM_TABLE        true
 
@@ -151,6 +151,10 @@
 #define FIRSTNAME_LEN                 16
 #define LASTNAME_LEN                 16
 #define DIST_PER_WARE                10
+
+
+#define REMOTE_TPCC false
+#define NORMAL_DELIVERY false
 
 ///////////////////////////////
 // TATP // unrelated to YCSB
