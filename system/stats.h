@@ -160,6 +160,7 @@ public:
     uint64_t _lat_per_txn_type[5];
     uint64_t _locals_per_txn_type[5];
     uint64_t _remotes_per_txn_type[5];
+    uint64_t _network_per_txn_type[5];
 #endif
 };
 

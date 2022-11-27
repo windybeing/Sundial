@@ -159,6 +159,7 @@ TxnManager::update_stats()
                 _finish_time - _txn_start_time - _lock_wait_time - _net_wait_time;
             stats->_stats[GET_THD_ID]->_lat_per_txn_type[ type ] +=
                 _finish_time - _txn_start_time;
+            stats->_stats[GET_THD_ID]->_network_per_txn_type[ type ] += _net_wait_time;
         } else
             stats->_stats[GET_THD_ID]->_aborts_per_txn_type[ type ]++;
     }
@@ -187,6 +188,7 @@ TxnManager::update_stats()
         if (!is_sub_txn()) {
             uint64_t total_msg = 0;
             uint64_t total_rt = 0;
+            uint64_t total_resp = 0;
             for (uint32_t i = 0; i < Message::NUM_MSG_TYPES; i ++) {
                 if (i == Message::PREPARED_ABORT)
                     M_ASSERT(_msg_count[i] == 0, "txn=%ld\n", get_txn_id());
@@ -194,6 +196,9 @@ TxnManager::update_stats()
                 stats->_stats[GET_THD_ID]->_msg_committed_size[i] += _msg_size[i];
                 total_msg += _msg_count[i];
                 total_rt += _msg_count[i] > 0 ? 1 : 0;
+                if (Message::is_response(Message::Type(i))) {
+                    total_resp += _msg_count[i];
+                }
             }
             INC_INT_STATS(num_rt_per_rem_committed, total_rt);
 #if WORKLOAD == TPCC && STATS_ENABLE

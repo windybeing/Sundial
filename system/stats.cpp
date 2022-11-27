@@ -37,6 +37,7 @@ void Stats_thd::clear() {
     memset(_aborts_per_txn_type, 0, sizeof(uint64_t) * 5);
     memset(_time_per_txn_type, 0, sizeof(uint64_t) * 5);
     memset(_lat_per_txn_type, 0, sizeof(uint64_t) * 5);
+    memset(_network_per_txn_type, 0, sizeof(uint64_t) * 5);
     memset(_locals_per_txn_type, 0, sizeof(uint64_t) * 5);
     memset(_remotes_per_txn_type, 0, sizeof(uint64_t) * 5);
 #endif
@@ -59,6 +60,7 @@ Stats_thd::copy_from(Stats_thd * stats_thd)
         _remotes_per_txn_type[n] = stats_thd->_remotes_per_txn_type[n];
         _time_per_txn_type[n] = stats_thd->_time_per_txn_type[n];
         _lat_per_txn_type[n] = stats_thd->_lat_per_txn_type[n];
+        _network_per_txn_type[n] = stats_thd->_network_per_txn_type[n];
     }
 #endif
 }
@@ -132,6 +134,7 @@ void Stats::output(std::ostream * os)
                 _stats[i]->_remotes_per_txn_type[n] -= base->_stats[i]->_remotes_per_txn_type[n];
                 _stats[i]->_time_per_txn_type[n] -= base->_stats[i]->_time_per_txn_type[n];
                 _stats[i]->_lat_per_txn_type[n] -= base->_stats[i]->_lat_per_txn_type[n];
+                _stats[i]->_network_per_txn_type[n] -= base->_stats[i]->_network_per_txn_type[n];
             }
 #endif
         }
@@ -207,12 +210,15 @@ void Stats::output(std::ostream * os)
         << setw(12) << left << "Aborts"
         << setw(12) << left << "Locals"
         << setw(12) << left << "Remotes"
-        << setw(12) << left << "Time" << endl;
+        << setw(12) << left << "TotalTime(s)"
+        << setw(12) << left << "Time(us)"
+        << setw(12) << left << "Latency(us)"
+        << setw(12) << left << "Network(us)" << endl;
 
     for (uint32_t i = 0; i < 5; i ++) {
         uint64_t commits = 0, aborts = 0, locals = 0, remotes = 0;
         double time = 0;
-        uint64_t total_time = 0, total_lat = 0;
+        uint64_t total_time = 0, total_lat = 0, total_network = 0;
         for (uint32_t tid = 0; tid < g_num_worker_threads; tid ++) {
             commits += _stats[tid]->_commits_per_txn_type[i];
             aborts += _stats[tid]->_aborts_per_txn_type[i];
@@ -221,11 +227,13 @@ void Stats::output(std::ostream * os)
             time += 1.0 * _stats[tid]->_time_per_txn_type[i] / BILLION;
             total_time += _stats[tid]->_time_per_txn_type[i];
             total_lat += _stats[tid]->_lat_per_txn_type[i];
+            total_network += _stats[tid]->_network_per_txn_type[i];
         }
         uint64_t c = commits;
         if (c == 0) c = 1;
         total_time = total_time / c;
         total_lat = total_lat / c;
+        total_network = total_network / c;
         out << "    " << setw(18) << left << TPCCHelper::get_txn_name(i)
             << setw(12) << left << commits
             << setw(12) << left << aborts
@@ -233,7 +241,8 @@ void Stats::output(std::ostream * os)
             << setw(12) << left << remotes
             << setw(12) << left << time
             << setw(12) << left << total_time
-            << setw(12) << left << total_lat << endl;
+            << setw(12) << left << total_lat
+            << setw(12) << left << total_network << endl;
     }
 #endif
 
