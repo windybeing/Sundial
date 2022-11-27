@@ -36,6 +36,7 @@ void Stats_thd::clear() {
     memset(_commits_per_txn_type, 0, sizeof(uint64_t) * 5);
     memset(_aborts_per_txn_type, 0, sizeof(uint64_t) * 5);
     memset(_time_per_txn_type, 0, sizeof(uint64_t) * 5);
+    memset(_lat_per_txn_type, 0, sizeof(uint64_t) * 5);
     memset(_locals_per_txn_type, 0, sizeof(uint64_t) * 5);
     memset(_remotes_per_txn_type, 0, sizeof(uint64_t) * 5);
 #endif
@@ -57,6 +58,7 @@ Stats_thd::copy_from(Stats_thd * stats_thd)
         _locals_per_txn_type[n] = stats_thd->_locals_per_txn_type[n];
         _remotes_per_txn_type[n] = stats_thd->_remotes_per_txn_type[n];
         _time_per_txn_type[n] = stats_thd->_time_per_txn_type[n];
+        _lat_per_txn_type[n] = stats_thd->_lat_per_txn_type[n];
     }
 #endif
 }
@@ -129,6 +131,7 @@ void Stats::output(std::ostream * os)
                 _stats[i]->_locals_per_txn_type[n] -= base->_stats[i]->_locals_per_txn_type[n];
                 _stats[i]->_remotes_per_txn_type[n] -= base->_stats[i]->_remotes_per_txn_type[n];
                 _stats[i]->_time_per_txn_type[n] -= base->_stats[i]->_time_per_txn_type[n];
+                _stats[i]->_lat_per_txn_type[n] -= base->_stats[i]->_lat_per_txn_type[n];
             }
 #endif
         }
@@ -172,17 +175,16 @@ void Stats::output(std::ostream * os)
         avg_latency += _stats[tid]->_float_stats[STAT_txn_latency];
     avg_latency /= total_num_commits;
 
-    out << "    " << setw(30) << left << "average_latency:" << avg_latency / BILLION << endl;
+    out << "    " << setw(30) << left << "average_latency (us):" << avg_latency / 1000 << endl;
     // print latency distribution
-    out << "    " << setw(30) << left << "90%_latency:"
-        << _aggregate_latency[(uint64_t)(total_num_commits * 0.90)] / BILLION << endl;
-    out << "    " << setw(30) << left << "95%_latency:"
-        << _aggregate_latency[(uint64_t)(total_num_commits * 0.95)] / BILLION << endl;
-    out << "    " << setw(30) << left << "99%_latency:"
-        << _aggregate_latency[(uint64_t)(total_num_commits * 0.99)] / BILLION << endl;
-    out << "    " << setw(30) << left << "max_latency:"
-        << _aggregate_latency[total_num_commits - 1] / BILLION << endl;
-
+    out << "    " << setw(30) << left << "90%_latency (us):"
+        << _aggregate_latency[(uint64_t)(total_num_commits * 0.90)] / 1000 << endl;
+    out << "    " << setw(30) << left << "95%_latency (us):"
+        << _aggregate_latency[(uint64_t)(total_num_commits * 0.95)] / 1000 << endl;
+    out << "    " << setw(30) << left << "99%_latency (us):"
+        << _aggregate_latency[(uint64_t)(total_num_commits * 0.99)] / 1000 << endl;
+    out << "    " << setw(30) << left << "max_latency (us):"
+        << _aggregate_latency[total_num_commits - 1] / 1000 << endl;
     out << endl;
 #endif
     // print integer stats
@@ -206,22 +208,32 @@ void Stats::output(std::ostream * os)
         << setw(12) << left << "Locals"
         << setw(12) << left << "Remotes"
         << setw(12) << left << "Time" << endl;
+
     for (uint32_t i = 0; i < 5; i ++) {
         uint64_t commits = 0, aborts = 0, locals = 0, remotes = 0;
         double time = 0;
+        uint64_t total_time = 0, total_lat = 0;
         for (uint32_t tid = 0; tid < g_num_worker_threads; tid ++) {
             commits += _stats[tid]->_commits_per_txn_type[i];
             aborts += _stats[tid]->_aborts_per_txn_type[i];
             locals += _stats[tid]->_locals_per_txn_type[i];
             remotes += _stats[tid]->_remotes_per_txn_type[i];
             time += 1.0 * _stats[tid]->_time_per_txn_type[i] / BILLION;
+            total_time += _stats[tid]->_time_per_txn_type[i];
+            total_lat += _stats[tid]->_lat_per_txn_type[i];
         }
+        uint64_t c = commits;
+        if (c == 0) c = 1;
+        total_time = total_time / c;
+        total_lat = total_lat / c;
         out << "    " << setw(18) << left << TPCCHelper::get_txn_name(i)
             << setw(12) << left << commits
             << setw(12) << left << aborts
             << setw(12) << left << locals
             << setw(12) << left << remotes
-            << setw(12) << left << time << endl;
+            << setw(12) << left << time
+            << setw(12) << left << total_time
+            << setw(12) << left << total_lat << endl;
     }
 #endif
 
@@ -314,13 +326,16 @@ void Stats::print()
     }
     // compute the latency distribution
 #if COLLECT_LATENCY
+    uint32_t cp = int(1000 * g_warmup_time / STATS_CP_INTERVAL) - 1;
     for (uint32_t tid = 0; tid < g_total_num_threads; tid ++) {
+        Stats * base = _checkpoints[cp];
+        uint64_t prev_commits = base->_stats[tid]->_int_stats[STAT_num_commits];
         M_ASSERT(_stats[tid]->all_latency.size() == _stats[tid]->_int_stats[STAT_num_commits],
                  "%ld vs. %ld\n",
                  _stats[tid]->all_latency.size(), _stats[tid]->_int_stats[STAT_num_commits]);
         // TODO. should exclude txns during the warmup
         _aggregate_latency.insert(_aggregate_latency.end(),
-                                 _stats[tid]->all_latency.begin(),
+                                 _stats[tid]->all_latency.begin() + prev_commits,
                                  _stats[tid]->all_latency.end());
     }
     std::sort(_aggregate_latency.begin(), _aggregate_latency.end());

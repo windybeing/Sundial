@@ -15,7 +15,7 @@
 // Statistics
 // ==========
 // COLLECT_LATENCY: when set to true, will collect transaction latency information
-#define COLLECT_LATENCY true           // statics related, disabled
+#define COLLECT_LATENCY false           // statics related, disabled
 // PRT_LAT_DISTR: when set to true, will print transaction latency distribution
 #define PRT_LAT_DISTR false             // statics related, disabled
 #define STATS_ENABLE true               // statics related, must be enabled

@@ -157,6 +157,8 @@ TxnManager::update_stats()
             stats->_stats[GET_THD_ID]->_commits_per_txn_type[ type ]++;
             stats->_stats[GET_THD_ID]->_time_per_txn_type[ type ] +=
                 _finish_time - _txn_start_time - _lock_wait_time - _net_wait_time;
+            stats->_stats[GET_THD_ID]->_lat_per_txn_type[ type ] +=
+                _finish_time - _txn_start_time;
         } else
             stats->_stats[GET_THD_ID]->_aborts_per_txn_type[ type ]++;
     }
