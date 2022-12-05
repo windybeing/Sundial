@@ -160,6 +160,7 @@ TxnManager::update_stats()
             stats->_stats[GET_THD_ID]->_lat_per_txn_type[ type ] +=
                 _finish_time - _txn_start_time;
             stats->_stats[GET_THD_ID]->_network_per_txn_type[ type ] += _net_wait_time;
+            stats->_stats[GET_THD_ID]->_local_wait_per_txn_type[ type ] += _lock_wait_time;
         } else
             stats->_stats[GET_THD_ID]->_aborts_per_txn_type[ type ]++;
     }
