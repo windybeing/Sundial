@@ -10,7 +10,8 @@
 // warmup time in seconds
 #define WARMUP 0
 // WORKLOAD can be YCSB or TPCC
-#define WORKLOAD TPCC
+#define WORKLOAD YCSB10
+#define SIMULATE_REMOTE true
 
 // Statistics
 // ==========
@@ -204,6 +205,7 @@ extern TestCases                    g_test_case;
 // WORKLOAD
 #define YCSB                        1
 #define TPCC                        2
+#define YCSB10                      3
 // Concurrency Control Algorithm
 #define NO_WAIT                        1
 #define WAIT_DIE                    2

@@ -1,6 +1,8 @@
 #include "global.h"
 #include "ycsb.h"
 #include "ycsb_query.h"
+#include "ycsb10.h"
+#include "ycsb10_query.h"
 #include "tpcc.h"
 #include "server_thread.h"
 #include "manager.h"
@@ -62,6 +64,10 @@ int main(int argc, char* argv[])
         case YCSB :
             m_wl = new WorkloadYCSB;
             QueryYCSB::calculateDenom();
+            break;
+        case YCSB10 :
+            m_wl = new WorkloadYCSB10;
+            QueryYCSB10::calculateDenom();
             break;
         case TPCC :
             m_wl = new WorkloadTPCC;

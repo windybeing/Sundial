@@ -99,7 +99,7 @@ TxnTable::print_txn()
         Node * node = _buckets[i]->first;
         while ( node )
         {
-#if WORKLOAD == YCSB
+#if (WORKLOAD == YCSB || WORKLOAD == YCSB10)
             TxnManager * txn = node->txn;
             try{
                 StoreProcedure * sp = txn->get_store_procedure();

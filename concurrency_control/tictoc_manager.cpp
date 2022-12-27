@@ -931,6 +931,10 @@ TicTocManager::get_remote_nodes(set<uint32_t> * remote_nodes)
         }
     }
 #endif
+#if SIMULATE_REMOTE
+    uint32_t remote_node_id = (g_node_id + 1) % g_num_nodes;
+    remote_nodes->insert(remote_node_id);
+#endif
     //printf("[txn=%ld] remote_nodes.size() = %ld\n", _txn->get_txn_id(), remote_nodes->size());
     // TODO If a remote noed is readonly and no tuples have expired, no need to prepare it.
     // In theory, no need to commit it as well if it does not maintain any local states for the txn.
@@ -1192,7 +1196,7 @@ TicTocManager::process_prepare_resp(RC rc, uint32_t node_id, char * data)
             buffer.get( &rts );
             buffer.get( &tuple_size );
             buffer.get( data, tuple_size );
-            assert(WORKLOAD == YCSB);
+            assert(WORKLOAD == YCSB || WORKLOAD == YCSB10);
             assert(GET_WORKLOAD->key_to_node(key) != g_node_id);
             if (access->cached)
                 INC_INT_STATS(num_renew_failure, 1);

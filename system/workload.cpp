@@ -88,7 +88,7 @@ RC workload::init_schema(string schema_file) {
             int part_cnt = 1;
             uint32_t table_id = index_to_table(num_indexes);
 #if INDEX_STRUCT == IDX_HASH
-            if (WORKLOAD == YCSB)
+            if (WORKLOAD == YCSB || WORKLOAD == YCSB10)
                 index->init(tables[ table_id ] , g_synth_table_size * 2);
             else if (WORKLOAD == TPCC) {
                 assert(tables[table_id] != NULL);

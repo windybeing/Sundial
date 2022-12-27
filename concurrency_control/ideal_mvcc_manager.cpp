@@ -23,7 +23,7 @@ bool MVCCManager::_pre_abort = PRE_ABORT;
 MVCCManager::MVCCManager(TxnManager * txn)
     : CCManager(txn)
 {
-    assert(WORKLOAD == YCSB);
+    assert(WORKLOAD == YCSB || WORKLOAD == YCSB10);
     _is_read_only = true;
     _validation_no_wait = true;
 
