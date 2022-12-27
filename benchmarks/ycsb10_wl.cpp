@@ -26,10 +26,10 @@ RC WorkloadYCSB10::init() {
     char * cpath = getenv("GRAPHITE_HOME");
     string path;
     if (cpath == NULL)
-        path = "./benchmarks/YCSB_schema.txt";
+        path = "./benchmarks/YCSB10_schema.txt";
     else {
         path = string(cpath);
-        path += "/tests/apps/dbms/YCSB_schema.txt";
+        path += "/tests/apps/dbms/YCSB10_schema.txt";
     }
     init_schema( path );
     init_table_parallel();

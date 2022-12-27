@@ -16,13 +16,14 @@ for server in $server_array; do
     rsync -aqzP --port=22 --force ./ifconfig.txt $server:/home/ubuntu/Sundial/
     rsync -aqzP --port=22 --force ./rundb $server:/home/ubuntu/Sundial/
     rsync -aqzP --port=22 --force ./benchmarks/YCSB_schema.txt $server:/home/ubuntu/Sundial/benchmarks/
+    rsync -aqzP --port=22 --force ./benchmarks/YCSB10_schema.txt $server:/home/ubuntu/Sundial/benchmarks/
 done
 
 for addr in $server_array; do
-    ssh $addr "cd Sundial; export LD_LIBRARY_PATH=\"/home/ubuntu/Sundial/libs;$LD_LIBRARY_PATH\"; tmux new-session -d -s sundial \"./rundb -GW10 -GT10 -S6 -z0.1 > cache.txt\"" &
+    ssh $addr "cd Sundial; export LD_LIBRARY_PATH=\"/home/ubuntu/Sundial/libs;$LD_LIBRARY_PATH\"; tmux new-session -d -s sundial \"./rundb -GW10 -GT10 -S6 -z0.1 -R10 -r0.5 > cache.txt\"" &
 done
 
-./rundb -GW10 -GT10 -S6 -z0.1 -o result.txt | tee cache.txt
+./rundb -GW10 -GT10 -S6 -z0.1 -R10 -r0.5 -o result.txt | tee cache.txt
 }
 
 print() {

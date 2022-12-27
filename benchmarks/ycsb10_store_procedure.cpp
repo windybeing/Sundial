@@ -121,12 +121,12 @@ YCSB10StoreProcedure::execute()
             char * data = get_cc_manager()->get_data(req->key, 0);
 
             if (req->rtype == RD) {
-                for (int fid = 0; fid < 10; fid ++)
-                    __attribute__((unused)) uint64_t fval = *(uint64_t *)(&data[fid * 100]);
+                for (int fid = 0; fid < 1; fid ++)
+                    __attribute__((unused)) uint64_t fval = *(uint64_t *)(&data[fid * 20]);
             } else {
                 assert(req->rtype == WR);
-                for (int fid = 1; fid < 10; fid ++)
-                    *(uint64_t *)(&data[fid * 100]) = _txn->get_txn_id();
+                for (int fid = 1; fid < 1; fid ++)
+                    *(uint64_t *)(&data[fid * 20]) = _txn->get_txn_id();
             }
         }
     }
