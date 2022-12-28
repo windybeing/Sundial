@@ -3,6 +3,7 @@
 #include "global.h"
 #include "helper.h"
 #include "query.h"
+#include "zipf.h"
 
 class workload;
 

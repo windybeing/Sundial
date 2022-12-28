@@ -87,35 +87,44 @@ void QueryYCSB10::gen_requests() {
     uint64_t all_keys[g_req_per_query];
     bool has_remote = false;
     _is_all_remote_readonly = true;
-    uint64_t table_size = g_synth_table_size;
+    // uint64_t table_size = g_synth_table_size;
+    bool readonly = glob_manager->rand_double() < g_readonly_perc;
     for (uint32_t tmp = 0; tmp < g_req_per_query; tmp ++) {
         RequestYCSB10 * req = &_requests[_request_cnt];
 
-        bool remote = (g_num_nodes > 1)? (glob_manager->rand_double() < g_perc_remote) : false;
-        uint32_t node_id;
-        if (remote) {
-            node_id = (g_node_id + glob_manager->rand_uint64(1, g_num_nodes - 1)) % g_num_nodes;
-            has_remote = true;
-        } else
-            node_id = g_node_id;
+        // bool remote = (g_num_nodes > 1)? (glob_manager->rand_double() < g_perc_remote) : false;
+        // uint32_t node_id;
+        // if (remote) {
+        //     node_id = (g_node_id + glob_manager->rand_uint64(1, g_num_nodes - 1)) % g_num_nodes;
+        //     has_remote = true;
+        // } else
+        //     node_id = g_node_id;
         #if SINGLE_PART_ONLY
         uint64_t row_id = zipf(table_size / g_num_worker_threads - 1, g_zipf_theta);
         row_id = row_id * g_num_worker_threads + GET_THD_ID;
         assert(row_id < table_size);
         #else
-        uint64_t row_id = zipf(table_size - 1, g_zipf_theta);
+        // uint64_t row_id = zipf(table_size - 1, g_zipf_theta);
         #endif
-        uint64_t primary_key = row_id * g_num_server_nodes + node_id;
-        M_ASSERT(row_id < table_size, "row_id=%ld\n", row_id);
-        bool readonly = (row_id == 0)? false :
-                        (int(row_id * g_readonly_perc) > int((row_id - 1) * g_readonly_perc));
+        uint64_t primary_key;
+        bool exist = false;
+        do {
+            exist = false;
+            primary_key = zipfianGenerator->nextValue();
+            // remove duplicates
+            for (uint32_t i = 0; i < tmp; i++)
+                if (all_keys[i] == primary_key)
+                    exist = true;
+            if (!exist)
+                all_keys[_request_cnt ++] = primary_key;
+        } while (exist);
         if (readonly)
             req->rtype = RD;
         else {
             double r = glob_manager->rand_double();
             req->rtype = (r < g_read_perc)? RD : WR;
         }
-        if (req->rtype == WR && remote)
+        if (req->rtype == WR && GET_WORKLOAD->key_to_node(primary_key) != g_node_id)
             _is_all_remote_readonly = false;
 
         #if SOCIAL_NETWORK
@@ -140,13 +149,6 @@ void QueryYCSB10::gen_requests() {
 
         req->key = primary_key;
         req->value = 0;
-        // remove duplicates
-        bool exist = false;
-        for (uint32_t i = 0; i < _request_cnt; i++)
-            if (all_keys[i] == req->key)
-                exist = true;
-        if (!exist)
-            all_keys[_request_cnt ++] = req->key;
     }
     if (!has_remote)
         _is_all_remote_readonly = false;

@@ -125,7 +125,7 @@ YCSB10StoreProcedure::execute()
                     __attribute__((unused)) uint64_t fval = *(uint64_t *)(&data[fid * 20]);
             } else {
                 assert(req->rtype == WR);
-                for (int fid = 1; fid < 1; fid ++)
+                for (int fid = 0; fid < 1; fid ++)
                     *(uint64_t *)(&data[fid * 20]) = _txn->get_txn_id();
             }
         }

@@ -20,10 +20,10 @@ for server in $server_array; do
 done
 
 for addr in $server_array; do
-    ssh $addr "cd Sundial; export LD_LIBRARY_PATH=\"/home/ubuntu/Sundial/libs;$LD_LIBRARY_PATH\"; tmux new-session -d -s sundial \"./rundb -GW10 -GT10 -S6 -z0.1 -R10 -r0.5 > cache.txt\"" &
+    ssh $addr "cd Sundial; export LD_LIBRARY_PATH=\"/home/ubuntu/Sundial/libs;$LD_LIBRARY_PATH\"; tmux new-session -d -s sundial \"./rundb -GW10 -GT10 -S6 -z$contention -R10 -r0.5 -s16454577 > cache.txt\"" &
 done
 
-./rundb -GW10 -GT10 -S6 -z0.1 -R10 -r0.5 -o result.txt | tee cache.txt
+./rundb -GW10 -GT10 -S6 -z$contention -R10 -r0.5 -s16454577 -o cache.txt 
 }
 
 print() {
@@ -33,6 +33,10 @@ for server in $server_array; do
 done
 }
 
-run
-# print
-print | sed 's/Throughput://g' | sed 's/ //g' | awk '{s += $1} END {print s}'
+for contention in 0.1 0.2 0.3 0.4 0.5 0.6 0.7 0.8 0.9 0.95 0.99;
+do 
+    run $contention
+    # print
+    echo -n "$contention " >> ycsb_result.txt
+    print | sed 's/Throughput://g' | sed 's/ //g' | awk '{s += $1} END {print s}' >> ycsb_result.txt
+done

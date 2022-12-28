@@ -122,3 +122,4 @@ class ZipfianGenerator {
     std::uniform_real_distribution<> dis;
 };
 
+extern ZipfianGenerator* zipfianGenerator;

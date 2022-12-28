@@ -13,6 +13,7 @@
 #include "output_thread.h"
 #include "caching.h"
 #include "log.h"
+#include "benchmarks/zipf.h"
 
 void * start_thread(void *);
 
@@ -29,6 +30,7 @@ int main(int argc, char* argv[])
     transport = new Transport * [g_num_input_threads];
     for (uint32_t i = 0; i < g_num_input_threads; i ++)
         transport[i] = new Transport(i);
+    zipfianGenerator = new ZipfianGenerator(0, g_synth_table_size * g_num_server_nodes - 1, g_zipf_theta);
 
     // g_num_worker_threads is the # of server threads running on each node
     g_num_worker_threads = g_num_server_threads;
