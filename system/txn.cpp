@@ -250,7 +250,9 @@ TxnManager::start_execute()
         waiting_for_lock = false;
         waiting_for_remote = false;
     }
+    auto start = get_sys_clock();
     _store_procedure->init();
+    INC_FLOAT_STATS(time_init_store_procedure, get_sys_clock() - start);
     assert(_txn_state == RUNNING);
     return execute();
 }
@@ -280,6 +282,7 @@ TxnManager::execute(bool restart)
     // remote request.
     if (is_sub_txn())
     {
+        auto start = get_sys_clock();
         uint32_t resp_size = 0;
         char * resp_data = NULL;
         char * data = _msg->get_data();
@@ -301,6 +304,7 @@ TxnManager::execute(bool restart)
             waiting_for_lock = true;
             _lock_wait_start_time = get_sys_clock();
         }
+        INC_FLOAT_STATS(time_remote_request, get_sys_clock() - start);
         return rc;
     } else {
         // running transaction on the host node.
@@ -308,7 +312,7 @@ TxnManager::execute(bool restart)
 
         uint64_t tt = get_sys_clock();
         RC rc = _store_procedure->execute();
-        INC_FLOAT_STATS(logic, get_sys_clock() - tt);
+        INC_FLOAT_STATS(time_execution, get_sys_clock() - tt);
 
         if (rc == RCOK) {
             if (_num_resp_expected == 0) {
@@ -446,6 +450,7 @@ TxnManager::process_local_miss()
 {
     // need to send query to remote node.
     // 1. suspend the txn and put it to txn_table
+    auto _local_miss_start = get_sys_clock();
     assert(!is_sub_txn());
     assert(_num_resp_expected == 0);
     map<uint32_t, UnstructuredBuffer> &remote_requests = _store_procedure->remote_requests;
@@ -464,6 +469,7 @@ TxnManager::process_local_miss()
             remote_nodes_involved.insert(node);
         }
     }
+    INC_FLOAT_STATS(time_handle_local_miss, get_sys_clock() - _local_miss_start);
     return RCOK;
 }
 
@@ -636,6 +642,7 @@ TxnManager::process_2pc_prepare_phase()
 //#endif
     if (rc == ABORT) {
         // local validation fails
+        INC_FLOAT_STATS(time_prepare, get_sys_clock() - _prepare_start_time);
         return process_2pc_commit_phase(ABORT);
     } else if (rc == RCOK || rc == WAIT) {
         // for local caching, some remotes nodes are not registered
@@ -658,6 +665,7 @@ TxnManager::process_2pc_prepare_phase()
             }
         }
     }
+    INC_FLOAT_STATS(time_prepare, get_sys_clock() - _prepare_start_time);
     if (rc == WAIT) {
         _lock_wait_start_time = get_sys_clock();
         return rc;
@@ -724,6 +732,7 @@ TxnManager::process_2pc_prepare_req(Message * msg)
         log_manager->log(log_record_size, log_record);
     }
 #endif
+    INC_FLOAT_STATS(time_prepare, get_sys_clock() - _prepare_start_time);
     return rc;
 #endif
 }
@@ -731,6 +740,7 @@ TxnManager::process_2pc_prepare_req(Message * msg)
 RC
 TxnManager::continue_prepare_phase()
 {
+    auto prepare_start = get_sys_clock();
     RC rc = RCOK;
     assert (_txn_state == PREPARING);
     assert(waiting_for_lock);
@@ -741,9 +751,10 @@ TxnManager::continue_prepare_phase()
             _txn_abort = true;
             INC_INT_STATS(num_aborts_signal, 1);
         }
-        if (num_resp_expected > 0)
+        if (num_resp_expected > 0) {
+            INC_FLOAT_STATS(time_prepare, get_sys_clock() - prepare_start);
             return RCOK;
-        else {
+        } else {
             waiting_for_remote = false;
             rc = _txn_abort? ABORT : COMMIT;
 #if LOG_ENABLE
@@ -752,6 +763,7 @@ TxnManager::continue_prepare_phase()
             char log_record[ log_record_size ];
             log_manager->log(log_record_size, log_record);
 #endif
+            INC_FLOAT_STATS(time_prepare, get_sys_clock() - prepare_start);
             return process_2pc_commit_phase(rc);
         }
     } else {
@@ -777,6 +789,7 @@ TxnManager::continue_prepare_phase()
         log_manager->log(log_record_size, log_record);
 #endif
         send_msg(new Message(type, _src_node_id, get_txn_id(), _resp_size, _resp_data));
+        INC_FLOAT_STATS(time_prepare, get_sys_clock() - prepare_start);
         return rc;
     }
 }
@@ -784,6 +797,7 @@ TxnManager::continue_prepare_phase()
 RC
 TxnManager::process_2pc_prepare_resp(Message * msg)
 {
+    auto start = get_sys_clock();
     RC rc = RCOK;
         rc = RCOK;
     if (msg->get_type() == Message::PREPARED_ABORT)
@@ -816,6 +830,7 @@ TxnManager::process_2pc_prepare_resp(Message * msg)
     }
     COMPILER_BARRIER
     uint32_t num_resp_left = ATOM_SUB_FETCH(_num_resp_expected, 1);
+    INC_FLOAT_STATS(time_prepare, get_sys_clock() - start);
     if (num_resp_left > 0) {
         return RCOK;
     } else {
@@ -893,12 +908,14 @@ TxnManager::process_2pc_commit_phase(RC rc)
     _cc_manager->process_commit_phase_coord(rc);
     if (resp_expected) {
         waiting_for_remote = true;
+        INC_FLOAT_STATS(time_commit, get_sys_clock() - _commit_start_time);
         return RCOK;
     } else {
         remote_nodes_involved.clear();
         aborted_remote_nodes.clear();
         readonly_remote_nodes.clear();
         _txn_state = (rc == COMMIT)? COMMITTED : ABORTED;
+        INC_FLOAT_STATS(time_commit, get_sys_clock() - _commit_start_time);
         return rc;
     }
 }
@@ -906,6 +923,7 @@ TxnManager::process_2pc_commit_phase(RC rc)
 RC
 TxnManager::process_2pc_commit_req(Message * msg)
 {
+    auto start = get_sys_clock();
     RC rc;
     if (msg->get_type() == Message::COMMIT_REQ) {
         _txn_state = COMMITTED;
@@ -924,6 +942,7 @@ TxnManager::process_2pc_commit_req(Message * msg)
 
     _cc_manager->process_commit_req(rc, msg->get_data_size(), msg->get_data());
     send_msg(new Message(Message::ACK, msg->get_src_node_id(), get_txn_id(), 0, NULL));
+    INC_FLOAT_STATS(time_commit, get_sys_clock() - start);
     return rc;
 }
 

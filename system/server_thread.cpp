@@ -119,6 +119,7 @@ RC ServerThread::run() {
                     system_txn_man->set_txn_id( msg->get_txn_id() );
                     system_txn_man->process_msg(msg);
                     DELETE(Message, msg);
+                    INC_FLOAT_STATS(time_process_txn, get_sys_clock() - t2);
                     continue;
                 }
                 M_ASSERT(msg->get_type() == Message::REQ || msg->get_type() == Message::CLIENT_REQ,
@@ -247,6 +248,7 @@ RC ServerThread::run() {
 void
 ServerThread::handle_req_finish(RC rc, TxnManager * &txn_man)
 {
+    auto start = get_sys_clock();
 #if DEBUG_CC
     printf("[txn=%ld] rc=%d\n", txn_man->get_txn_id(), rc);
 #endif
@@ -260,6 +262,7 @@ ServerThread::handle_req_finish(RC rc, TxnManager * &txn_man)
             INC_INT_STATS(num_local_waits, 1);
         }
         _wait_buffer.insert(txn_man);
+        INC_FLOAT_STATS(time_handle_req_finish, get_sys_clock() - start);
         return;
     }
     else if (rc == RCOK) {
@@ -278,6 +281,7 @@ ServerThread::handle_req_finish(RC rc, TxnManager * &txn_man)
             delete txn_man;
             txn_man = NULL;
         }
+        INC_FLOAT_STATS(time_handle_req_finish, get_sys_clock() - start);
         return;
 #endif
     } else {
@@ -316,6 +320,7 @@ ServerThread::handle_req_finish(RC rc, TxnManager * &txn_man)
                     _native_txn = NULL;
                     txn_man = NULL;
                     INC_INT_STATS(num_aborts_terminate, 1);
+                    INC_FLOAT_STATS(time_handle_req_finish, get_sys_clock() - start);
                     return;
                 }
                 INC_INT_STATS(num_aborts_restart, 1);
@@ -344,6 +349,7 @@ ServerThread::handle_req_finish(RC rc, TxnManager * &txn_man)
             }
         }
     }
+    INC_FLOAT_STATS(time_handle_req_finish, get_sys_clock() - start);
 }
 
 void

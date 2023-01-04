@@ -166,11 +166,11 @@ void Stats::output(std::ostream * os)
             total = total / total_num_commits * 1000000; // in us.
             suffix = " (in us) ";
         }
-        out << "    " << setw(30) << left << statsFloatName[i] + suffix + ':' << total / BILLION;
-        out << " (";
+        out << "    "  << left << statsFloatName[i] + suffix + ": " << total / BILLION;
+        out << " ( ";
         for (uint32_t tid = 0; tid < g_total_num_threads; tid ++)
-            out << _stats[tid]->_float_stats[i] / BILLION << ',';
-        out << ')' << endl;
+            out << _stats[tid]->_float_stats[i] / BILLION << ",";
+        out << " )" << endl;
     }
 
     out << endl;

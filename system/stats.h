@@ -16,7 +16,13 @@ enum StatsFloat {
     STAT_time_abort_queue,
     STAT_time_idle,
     STAT_time_write_output_queue,
-
+    STAT_time_execution,
+    STAT_time_prepare,
+    STAT_time_commit,
+    STAT_time_remote_request,
+    STAT_time_init_store_procedure,
+    STAT_time_handle_local_miss,
+    STAT_time_handle_req_finish,
     // Logging
     STAT_log_size,
 
@@ -205,6 +211,13 @@ public:
         "time_abort_queue",
         "time_idle",
         "time_write_output_queue",
+        "time_execution",
+        "time_prepare",
+        "time_commit",
+        "time_remote_request",
+        "time_init_store_procedure",
+        "time_handle_local_miss",
+        "time_handle_req_finish",
 
         // Logging
         "log_size",
