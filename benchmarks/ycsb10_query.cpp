@@ -111,6 +111,18 @@ void QueryYCSB10::gen_requests() {
         do {
             exist = false;
             primary_key = zipfianGenerator->nextValue();
+#ifdef ENABLE_DISTRIBUTED_TXN
+            bool remote = (g_num_nodes > 1)? (glob_manager->rand_double() < g_perc_remote) : false;
+            uint64_t node;
+            if (remote && tmp == 0) {
+                do {
+                    node = glob_manager->rand_uint64(0, g_num_nodes - 1); 
+                } while (node == g_node_id);
+            } else {
+                node = g_node_id;
+            }
+            primary_key = node + g_num_nodes * primary_key;
+#endif
             // remove duplicates
             for (uint32_t i = 0; i < tmp; i++)
                 if (all_keys[i] == primary_key)

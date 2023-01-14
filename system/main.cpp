@@ -30,7 +30,12 @@ int main(int argc, char* argv[])
     transport = new Transport * [g_num_input_threads];
     for (uint32_t i = 0; i < g_num_input_threads; i ++)
         transport[i] = new Transport(i);
+#ifdef ENABLE_DISTRIBUTED_TXN
+    printf("Use distributed key, distributed threshold: %f, g_zipf_theta: %f\n", g_perc_remote, g_zipf_theta);
+    zipfianGenerator = new ZipfianGenerator(0, g_synth_table_size - 1, g_zipf_theta);
+#else
     zipfianGenerator = new ZipfianGenerator(0, g_synth_table_size * g_num_server_nodes - 1, g_zipf_theta);
+#endif
 
     // g_num_worker_threads is the # of server threads running on each node
     g_num_worker_threads = g_num_server_threads;

@@ -2,7 +2,7 @@
 # servers="172.31.27.114"
 # servers="172.31.18.67;"
 # servers="172.31.18.67;172.31.18.51;"
-servers="172.31.18.67;172.31.18.51;172.31.19.108;172.31.19.248;172.31.29.15;172.31.29.225;172.31.18.112;172.31.21.130;172.31.26.193;172.31.19.196;172.31.30.165;172.31.24.231"
+servers="172.31.18.67;172.31.18.51;172.31.19.108;172.31.19.248;172.31.29.15;172.31.29.225;172.31.18.112;172.31.21.130;172.31.26.193;172.31.19.196;172.31.30.165;172.31.24.231;172.31.22.232;172.31.16.149"
 server_array=$(echo $servers | tr ";" "\n")
 echo $server_array
 
@@ -20,10 +20,10 @@ for server in $server_array; do
 done
 
 for addr in $server_array; do
-    ssh $addr "cd Sundial; export LD_LIBRARY_PATH=\"/home/ubuntu/Sundial/libs;$LD_LIBRARY_PATH\"; tmux new-session -d -s sundial \"./rundb -GW10 -GT10 -S6 -z$contention -R10 -r0.5 -s16454577 > cache.txt\"" &
+    ssh $addr "cd Sundial; export LD_LIBRARY_PATH=\"/home/ubuntu/Sundial/libs;$LD_LIBRARY_PATH\"; tmux new-session -d -s sundial \"./rundb -GW10 -GT10 -S6 -Yr$ratio -z$contention -R10 -r0.5 -s16454577 > cache.txt\"" &
 done
 
-./rundb -GW10 -GT10 -S6 -z$contention -R10 -r0.5 -s16454577 -o cache.txt 
+./rundb -GW10 -GT10 -S6 -z$contention -Yr$ratio -R10 -r0.5 -s16454577 -o cache.txt 
 }
 
 print() {
@@ -33,10 +33,14 @@ for server in $server_array; do
 done
 }
 
-for contention in 0.1 0.2 0.3 0.4 0.5 0.6 0.7 0.8 0.9 0.95 0.99;
-do 
-    run $contention
-    # print
-    echo -n "$contention " >> ycsb_result.txt
-    print | sed 's/Throughput://g' | sed 's/ //g' | awk '{s += $1} END {print s}' >> ycsb_result.txt
+cat /dev/null > ycsb_result.txt
+for ratio in 0 0.01 0.02 0.03 0.04 0.05 0.1 0.15 0.2 0.3 0.4 0.5 0.6 0.7 0.8 0.9 1;
+do
+    for contention in 0.1 0.9 0.99;
+    do 
+        run $contention $ratio
+        # print
+        echo -n "$contention $ratio " >> ycsb_result.txt
+        print | sed 's/Throughput://g' | sed 's/ //g' | awk '{s += $1} END {print s}' >> ycsb_result.txt
+    done
 done
