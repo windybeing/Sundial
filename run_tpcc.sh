@@ -18,10 +18,10 @@ for server in $server_array; do
 done
 
 for addr in $server_array; do
-    ssh $addr "cd Sundial; export LD_LIBRARY_PATH=\"/home/ubuntu/Sundial/libs;$LD_LIBRARY_PATH\"; tmux new-session -d -s sundial \"./rundb -GW10 -GT10 -S6 -To1 -Tr15 > cache.txt\"" &
+    ssh $addr "cd Sundial; export LD_LIBRARY_PATH=\"/home/ubuntu/Sundial/libs;$LD_LIBRARY_PATH\"; tmux new-session -d -s sundial \"./rundb -GW10 -GT10 -S6 -To$remote_ratio -Tr15 > cache.txt\"" &
 done
 
-./rundb -GW10 -GT10 -S6 -To1 -Tr15 | tee cache.txt
+./rundb -GW10 -GT10 -S6 -To$remote_ratio -Tr15 | tee cache.txt
 }
 
 print() {
@@ -31,5 +31,11 @@ for server in $server_array; do
 done
 }
 
-run
-print | sed 's/Throughput://g' | sed 's/ //g' | awk '{s += $1} END {print s}'
+cat /dev/null > tpcc_result.txt
+for remote_ratio in 1 5 10 15 20 25;
+do    
+    run $remote_ratio
+    # print
+    echo -n "$remote_ratio " >> tpcc_result.txt
+    print | sed 's/Throughput://g' | sed 's/ //g' | awk '{s += $1} END {print s}' >> tpcc_result.txt
+done

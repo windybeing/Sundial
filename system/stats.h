@@ -18,6 +18,8 @@ enum StatsFloat {
     STAT_time_write_output_queue,
     STAT_time_execution,
     STAT_time_prepare,
+    STAT_time_abort_execution,
+    STAT_time_abort_prepare,
     STAT_time_commit,
     STAT_time_remote_request,
     STAT_time_init_store_procedure,
@@ -112,6 +114,8 @@ enum StatsInt {
     STAT_num_ro_check,
     STAT_num_rw_read,
     STAT_num_rw_check,
+
+    STAT_num_exec,
 
     STAT_num_rt_per_rem_committed,
     STAT_num_rt_per_rem_aborted,
@@ -213,6 +217,8 @@ public:
         "time_write_output_queue",
         "time_execution",
         "time_prepare",
+        "time_abort_execution",
+        "time_abort_prepare",
         "time_commit",
         "time_remote_request",
         "time_init_store_procedure",
@@ -308,6 +314,7 @@ public:
         "num_rw_read",
         "num_rw_check",
         
+        "num_exec",
         "num_rt_per_rem_committed",
         "num_rt_per_rem_aborted",
 

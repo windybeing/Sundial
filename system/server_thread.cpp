@@ -286,6 +286,16 @@ ServerThread::handle_req_finish(RC rc, TxnManager * &txn_man)
 #endif
     } else {
         assert(rc == COMMIT || rc == ABORT);
+        if (rc == COMMIT) {
+            INC_FLOAT_STATS(time_execution, txn_man->_execution_time);
+            INC_FLOAT_STATS(time_prepare, txn_man->_prepare_time);
+            INC_INT_STATS(num_exec, 1);
+            txn_man->_execution_time = txn_man->_prepare_time = 0;
+        } else {
+            INC_FLOAT_STATS(time_abort_execution, txn_man->_execution_time);
+            INC_FLOAT_STATS(time_abort_prepare, txn_man->_prepare_time);
+            txn_man->_execution_time = txn_man->_prepare_time = 0;
+        }
         txn_man->print_state();
         txn_man->update_stats();
         if (txn_man->is_sub_txn()) {

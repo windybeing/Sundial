@@ -83,6 +83,10 @@ public:
     set<uint32_t>   aborted_remote_nodes;
     set<uint32_t>    readonly_remote_nodes;
     bool            _txn_abort;
+
+    uint64_t        _execution_time = 0;
+    uint64_t        _prepare_time = 0;
+    // bool            is_prepare_abort = false;
 private:
     // TODO. for now, a txn is mapped to a single thread.
     ServerThread *    _server_thread;

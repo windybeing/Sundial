@@ -11,7 +11,7 @@
 #define WARMUP 0
 // WORKLOAD can be YCSB or TPCC
 #define WORKLOAD YCSB10
-#define SIMULATE_REMOTE true
+#define SIMULATE_REMOTE false
 
 // Statistics
 // ==========
