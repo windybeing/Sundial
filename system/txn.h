@@ -86,7 +86,7 @@ public:
 
     uint64_t        _execution_time = 0;
     uint64_t        _prepare_time = 0;
-    // bool            is_prepare_abort = false;
+    bool            is_prepare_abort = false;
 private:
     // TODO. for now, a txn is mapped to a single thread.
     ServerThread *    _server_thread;

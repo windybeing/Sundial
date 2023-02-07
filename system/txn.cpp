@@ -644,26 +644,26 @@ TxnManager::process_2pc_prepare_phase()
     if (rc == ABORT) {
         // local validation fails
         _prepare_time += get_sys_clock() - _prepare_start_time;
-// #if SIMULATE_REMOTE
-//         _cc_manager->get_remote_nodes(&remote_nodes_involved);
-//         for (set<uint32_t>::iterator it = remote_nodes_involved.begin();
-//             it != remote_nodes_involved.end();
-//             it ++)
-//         {
-//             uint32_t data_size = 0;
-//             char * data = NULL;
-//             bool send = _cc_manager->need_prepare_req(*it, data_size, data);
-//             if (send) {
-//                 resp_expected = true;
-//                 waiting_for_remote = true;
-//                 ATOM_ADD_FETCH(_num_resp_expected, 1);
-//                 Message * msg = new Message(Message::PREPARE_REQ, *it, get_txn_id(), data_size, data);
-//                 send_msg(msg);
-//             }
-//         }
-//         is_prepare_abort = true;
-//         return RCOK;
-// #endif
+#if SIMULATE_REMOTE
+        _cc_manager->get_remote_nodes(&remote_nodes_involved);
+        for (set<uint32_t>::iterator it = remote_nodes_involved.begin();
+            it != remote_nodes_involved.end();
+            it ++)
+        {
+            uint32_t data_size = 0;
+            char * data = NULL;
+            bool send = _cc_manager->need_prepare_req(*it, data_size, data);
+            if (send) {
+                resp_expected = true;
+                waiting_for_remote = true;
+                ATOM_ADD_FETCH(_num_resp_expected, 1);
+                Message * msg = new Message(Message::PREPARE_REQ, *it, get_txn_id(), data_size, data);
+                send_msg(msg);
+            }
+        }
+        is_prepare_abort = true;
+        return RCOK;
+#endif
         return process_2pc_commit_phase(ABORT);
     } else if (rc == RCOK || rc == WAIT) {
         // for local caching, some remotes nodes are not registered
@@ -856,9 +856,11 @@ TxnManager::process_2pc_prepare_resp(Message * msg)
         return RCOK;
     } else {
         waiting_for_remote = false;
-        // if (is_prepare_abort) {
-        //     return process_2pc_commit_phase(ABORT);
-        // }
+#if SIMULATE_REMOTE
+        if (is_prepare_abort) {
+            return process_2pc_commit_phase(ABORT);
+        }
+#endif
         if (_txn_abort)
             return process_2pc_commit_phase(ABORT);
         else {

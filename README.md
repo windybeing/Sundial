@@ -26,6 +26,10 @@ To run on a single node:
 
     ./rundb
 
+To configure YCSB10 or TPCC workload and Sundial-remote or Sundial-local, update config.h and ifconfig.txt.
+
+To run YCSB10 workload, add -DENABLE_DISTRIBUTED_TXN in Makefile.
+
 To run on multiple nodes, add the ip address of each node into ifconfig.txt with one IP per line. Then execute ./rundb on each node. More details on the network setup can be found in transport/transport.cpp.
 
 To get command line options:
